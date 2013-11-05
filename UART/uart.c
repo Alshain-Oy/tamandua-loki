@@ -1,3 +1,23 @@
+/*
+
+   Copyright 2013 Alshain Oy
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+
+
+*/
+
 #include "uart.h"
 
 #define UART_IDLE      (0)
@@ -9,11 +29,9 @@ static volatile uint8_t uart_rx_buf = 0;
 static volatile uint8_t uart_tx_buf = 0;
 static volatile uint8_t uart_cnt = 0;
 static volatile uint8_t uart_txrd = 0;
-static volatile uint8_t uart_state = 0;
 static volatile uint8_t uart_has_received = 0;
 static volatile uint8_t uart_error = 0;
 
-/*static uint8_t uart_bits[12];*/
 
 static volatile uint8_t uart_recv_buffer[16];
 static volatile uint8_t uart_buffer_write_pos = 0;
@@ -21,70 +39,11 @@ static volatile uint8_t uart_buffer_read_pos = 0;
 
 
 
-/*volatile uint8_t uart_interbit = 105;*/ /* 9600 baud */
-/*static uint8_t uart_interbit = 47;*/ /* 19200 baud */
+/*const uint8_t uart_interbit = 105;*/ /* 9600 baud */
 
-const uint8_t uart_interbit = 54; /* 19200 baud, old 54 */
+const uint8_t uart_interbit = 54; /* 19200 baud*/
 
 const uint8_t uart_prescaler = _BV( CS01 );
-/*
-ISR(TIM0_COMPA_vect, ISR_NOBLOCK)
-{
-	
-  
-
- if( uart_txrd ){
-	if( (uint8_t) (uart_state & UART_SEND) ){
-	   
-	   PORTB = (uint8_t) ((uart_buf & 0x01)) | (1<<2);
-	   uart_buf >>= 1;
-	   PORTA |= 0x02;
-	   
-	   --uart_cnt; 
-	   if( uart_cnt == 0 ){
-		 uart_state = UART_IDLE;
-		 PORTB |= (uint8_t) (1<<0);
-		 }
-	 }
-	 else {
-		 uart_txrd = 0;
-		 TIMSK0 &= (uint8_t) ~(_BV( OCIE0A ));
-		 PORTB &= (uint8_t) ~( 1 << 2 );
-		 }
-
-   }
- else{
-    if( (uint8_t) (uart_state & UART_RECV) ){
-		PORTA &= ~0x04;
-		PORTA |= 0x02;
-		
-		uart_buf <<= 1;
-      uart_buf |= (uint8_t) (PINB >> 1) & (uint8_t) 0x01;
-      --uart_cnt; 
-
-		PORTA &= ~0x08;
-		PORTA |= ((uart_buf & 0x01) << 3);
-		
-
-        if( uart_cnt == 0 ){
-			uart_state = UART_IDLE;
-			}      
-        
-    }
-    else{    
-		TIMSK0 &= (uint8_t) ~(_BV( OCIE0A ));
-		uart_recv_buffer[ uart_buffer_write_pos ] = uart_buf;
-		uart_buffer_write_pos = (uart_buffer_write_pos + 1) % 16;
-		
-		uart_has_received = 1;
-		
-		uart_listen();
-      }
-     }
-  OCR0A = uart_interbit;
-  PORTA &= ~0x02;
-}
-*/
 
 #define UART_STATE_IDLE       0
 
@@ -104,7 +63,7 @@ ISR(TIM0_COMPA_vect, ISR_NOBLOCK)
 
 #define UART_TRANSMIT_DELAY        70
 #define UART_RECEIVE_DELAY         76    
-#define UART_PRESCALER				8
+#define UART_TIMER_PRESCALE			8
 
 #define UART_WAIT_ONE             53
 #define UART_WAIT_ONEHALF         (UART_WAIT_ONE + UART_WAIT_ONE/2)
@@ -184,7 +143,7 @@ ISR(TIM0_COMPA_vect, ISR_NOBLOCK)
 				TCNT0 = 0;
 				
 				/* set timer to start transmit */
-				OCR0A = UART_WAIT_ONE - (UART_TRANSMIT_DELAY/UART_PRESCALER);
+				OCR0A = UART_WAIT_ONE - (UART_TRANSMIT_DELAY/UART_TIMER_PRESCALE);
 				
 				/* clear timer interrupt flag */
 				TIFR0 = _BV(OCF0A);
@@ -234,6 +193,8 @@ ISR(TIM0_COMPA_vect, ISR_NOBLOCK)
 			}
 		else { 
 			if( uart_cnt == UART_TRANSMIT_STOP_1 ){
+			
+				/* INSERT PARITY BIT LOGIC HERE */
 			
 				bit_out = 0x01;
 				
@@ -291,12 +252,6 @@ ISR(PCINT1_vect)
 	PORTA |= 0x02;
 	PORTA &= ~0x08;
 	
-	/*PORTA |= 0x04;*/
-	/*
-	GIMSK &= (uint8_t) ~(_BV( PCIE1 ));
-	TCNT0 = 35;
-	TIMSK0 |= (_BV( OCIE0A ));
-	*/
 	uart_cnt = UART_RECEIVE_FIRST_DATA;
 	uart_rx_buf = 0x00;
 	
@@ -307,7 +262,7 @@ ISR(PCINT1_vect)
 	TCNT0 = 0;
 	
 	/* set timer to receive first bit */
-	OCR0A = UART_WAIT_ONEHALF - (UART_RECEIVE_DELAY/UART_PRESCALER);
+	OCR0A = UART_WAIT_ONEHALF - (UART_RECEIVE_DELAY/UART_TIMER_PRESCALE);
 	
 	/* disable pin change interrupt */
 	GIMSK &= (uint8_t) ~(_BV( PCIE1 ));
@@ -320,11 +275,6 @@ ISR(PCINT1_vect)
 	
 	/* start uart timer */
 	TCCR0B = uart_prescaler;
-	
-  
-  
-  
-  
 }
 
 
@@ -363,29 +313,6 @@ void uart_init( void ){
 	
 	}
 
-/*
-void uart_listen( void ){
-	uint8_t recv_pin = (uint8_t) ( 1 << 2);
-	
-	while( uart_txrd != 0 ){}
-	
-	uart_buf = 0;
-	uart_state = UART_RECV;
-	
-	
-	
-	uart_cnt = 11;
-	
-	GIMSK |= (uint8_t) _BV( PCIE1 );
-	PORTB &= (uint8_t) ~recv_pin;
-
-	
-
-	
-	uart_txrd = 0;
-	PORTA &= (uint8_t) ~(0x01);
-	}
-*/
 
 uint16_t uart_recv(void){
 	uint8_t dummy = 0;
@@ -398,32 +325,10 @@ uint16_t uart_recv(void){
 
 	uart_has_received = 0;
 	
-	/*
-	uart_buf = 0;
-	uart_buf |= uart_bits[ 3 ];
-	uart_buf <<= 1;
-	uart_buf |= uart_bits[ 4 ];
-	uart_buf <<= 1;
-	uart_buf |= uart_bits[ 5 ];
-	uart_buf <<= 1;
-	uart_buf |= uart_bits[ 6 ];
-	uart_buf <<= 1;
-	uart_buf |= uart_bits[ 7 ];
-	uart_buf <<= 1;
-	uart_buf |= uart_bits[ 8 ];
-	uart_buf <<= 1;
-	uart_buf |= uart_bits[ 9 ];
-	uart_buf <<= 1;
-	uart_buf |= uart_bits[ 10 ];
-	*/
-	
-	/*out = (uart_recv_buffer[ uart_buffer_read_pos ] >> 1) & 0xFF;*/
 	out = uart_recv_buffer[ uart_buffer_read_pos ];
 	
 	uart_buffer_read_pos = (uart_buffer_read_pos + 1) % 16;
-	
-	/*return ~out;*/
-	
+
 	return out;
 	}
 	
@@ -431,40 +336,6 @@ uint16_t uart_recv(void){
 
 	
 void uart_send( uint8_t data ){
-/*
-	uint8_t parity = (0x6996 >> ((data ^ ( data >> 4 ) ) & 0x0F ) ) & 0x01; 
-
-	uint8_t recv_pin = (uint8_t) ( 1 << 2);
-	uint16_t mask = 0x80;
-	
-	uart_buf = 0;
-	uart_state = UART_SEND;
-	
-	GIMSK &= (uint8_t) ~(_BV( PCIE1 ));
-	
-	uart_buf |= 1;
-	
-	uart_buf |= parity | 1;
-	uart_buf <<= 1;
-	
-	
-	uart_buf <<= 8;
-	
-	uart_buf |= data;
-	
-	uart_buf <<= 1;
-	
-	
-	
-	uart_txrd = 1;
-	uart_cnt = 11;
-	
-	
-	TCNT0 = 0;
-	OCR0A = (uart_interbit) >> 1;
-	TIMSK0 |= (_BV( OCIE0A )); 
-	PORTB = (1<<2);
-	*/
 	
 	/* stop uart timer */
 	TCCR0B = ~uart_prescaler;
@@ -489,7 +360,7 @@ void uart_send( uint8_t data ){
 	TCNT0 = 0;
 	
 	/* set timer to start transmit */
-	OCR0A = UART_WAIT_ONE - (UART_TRANSMIT_DELAY/UART_PRESCALER);
+	OCR0A = UART_WAIT_ONE - (UART_TRANSMIT_DELAY/UART_TIMER_PRESCALE);
 				
 	
 	/* clear timer interrupt flag */
@@ -508,10 +379,7 @@ void uart_send( uint8_t data ){
 
 
 void uart_wait( void ){
-	/*while( (uart_state != UART_IDLE) || (uart_txrd != 0 ) ){}*/
-	/*while( (uart_cnt != UART_STATE_IDLE) || (uart_txrd != 0 ) ){*/
-	while( (uart_cnt != UART_STATE_IDLE) && (uart_tx_buf != 0) ){}
-	
+	while( (uart_cnt != UART_STATE_IDLE) && (uart_tx_buf != 0) ){}	
 	}
 
 uint8_t uart_is_done( void ) {
