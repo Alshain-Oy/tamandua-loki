@@ -120,7 +120,7 @@ ISR(TIM0_COMPA_vect, ISR_NOBLOCK)
 			
 			if( uart_txrd == 1 ){
 				
-				uart_txrd = 0;
+				/*uart_txrd = 0;*/
 				
 				/* disable pin change interrupt */
 				GIMSK &= (uint8_t) ~(_BV( PCIE1 ));
@@ -379,7 +379,7 @@ void uart_send( uint8_t data ){
 
 
 void uart_wait( void ){
-	while( (uart_cnt != UART_STATE_IDLE) && (uart_tx_buf != 0) ){}	
+	while( (uart_cnt != UART_STATE_IDLE) && (uart_txrd != 0) ){}	
 	}
 
 uint8_t uart_is_done( void ) {

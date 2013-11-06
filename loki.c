@@ -57,8 +57,9 @@ int main(){
 	while( 1 ){
 		
 		if( uart_has_data()  ){
+			PORTA |= 0x10;
 			buffer[ bytes ] = uart_recv();
-			
+			PORTA &= ~0x10;
 			++bytes;
 			
 			t_last = timer_get_fast();/*timer_get_time();*/
@@ -67,7 +68,7 @@ int main(){
 			}
 		t_current = timer_get_fast();
 		
-		if( (t_current - t_last > 800) && (bytes > 0) ){
+		if( (t_current - t_last > 1500) && (bytes > 0) ){
 			
 			
 			/* 0xFF, 0x0F, 0xF0, 0x7f */
@@ -117,6 +118,15 @@ int main(){
 			*/
 			
 			/*PORTA |= 0x02;*/
+			
+			
+			if( bytes == 8 ){
+				
+				PORTA |= 0x10;
+				_delay_us(100);
+				PORTA &= ~0x10;
+				_delay_us(100);
+				}
 			
 			for( i = 0 ; i < bytes ; ++i ){
 				uart_send( buffer[i] );
