@@ -34,13 +34,14 @@ modbus_message_t msg;
 int main(){
 
 	uint8_t i = 0;
-	uint8_t modbus_address = 65;
+	uint8_t modbus_address = 0x17;
 	uint8_t retval;
 	uint8_t has_message = 0;
+	uint8_t recvd_byte;
 	
 	/*tick_t*/ uint16_t t_last, t_current;
 	
-	uint8_t buffer[16];
+	/*uint8_t buffer[16];*/
 	uint8_t bytes = 0;
 	
 	timer_init();
@@ -58,7 +59,9 @@ int main(){
 		
 		if( uart_has_data()  ){
 			PORTA |= 0x10;
-			buffer[ bytes ] = uart_recv();
+			recvd_byte = uart_recv();
+			modbus_append_byte( &msg, recvd_byte );
+			
 			PORTA &= ~0x10;
 			++bytes;
 			
@@ -68,82 +71,41 @@ int main(){
 			}
 		t_current = timer_get_fast();
 		
-		if( (t_current - t_last > 1500) && (bytes > 0) ){
+		if( (t_current - t_last > 2100) && (bytes > 0) ){
 			
+			retval = modbus_handle_message( &msg, modbus_address );
 			
-			/* 0xFF, 0x0F, 0xF0, 0x7f */
-			/*
-			PORTA &= ~0x04;
-			
-			if( buffer[0] == 0xFF ){
-				PORTA |= 0x04;
-				}
-			
-			_delay_us(100);
-			PORTA &= ~0x04;
-			_delay_us(100);
-			
-			if( buffer[1] == 0x0F ){
-				PORTA |= 0x04;
-				}
-			
-			_delay_us(100);
-			PORTA &= ~0x04;
-			_delay_us(100);
-			
-			if( buffer[2] == 0xF0 ){
-				PORTA |= 0x04;
-				}
-			
-			_delay_us(100);
-			PORTA &= ~0x04;
-			_delay_us(100);
-			
-			if( buffer[3] == 0x7F ){
-				PORTA |= 0x04;
-				}
-			
-			_delay_us(100);
-			PORTA &= ~0x04;
-			_delay_us(100);
-			
-			
-			_delay_ms(0.3);
-			
-			buffer[0] = 0x41;
-			buffer[1] = 0x42;
-			buffer[2] = 0x43;
-			buffer[3] = 0x44;
-			buffer[4] = 0x45;
-			*/
-			
-			/*PORTA |= 0x02;*/
-			
-			
-			if( bytes == 8 ){
+			if( retval == MODBUS_OK ){
+				for( i = 0 ; i < msg.length ; ++i ){
+					uart_send( msg.buffer[i] );
+					
+					PORTA |= 0x04;
+					uart_wait();
+					PORTA &= ~0x04;
+					_delay_us(80);
+					}
 				
-				PORTA |= 0x10;
-				_delay_us(100);
-				PORTA &= ~0x10;
-				_delay_us(100);
 				}
-			
-			for( i = 0 ; i < bytes ; ++i ){
-				uart_send( buffer[i] );
-				
+			else {
+				uart_send( 0xDE );
 				PORTA |= 0x04;
 				uart_wait();
 				PORTA &= ~0x04;
 				_delay_us(80);
+				
+				uart_send( 0xAD );
+				PORTA |= 0x04;
+				uart_wait();
+				PORTA &= ~0x04;
+				_delay_us(80);
+				
 				}
+				
 			_delay_us(300);
-			
-			/*uart_listen();*/
-			
-			
-			/*PORTA &= ~(0x02);*/
-			
 			bytes = 0;
+			
+			modbus_reset( &msg );
+			
 			}
 
 
