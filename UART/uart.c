@@ -383,7 +383,7 @@ void uart_wait( void ){
 	}
 
 uint8_t uart_is_done( void ) {
-	return uart_state == UART_IDLE;
+	return uart_cnt == UART_IDLE;
 	}
 
 

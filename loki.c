@@ -71,6 +71,7 @@ int main(){
 			
 			
 			/* 0xFF, 0x0F, 0xF0, 0x7f */
+			/*
 			PORTA &= ~0x04;
 			
 			if( buffer[0] == 0xFF ){
@@ -113,7 +114,7 @@ int main(){
 			buffer[2] = 0x43;
 			buffer[3] = 0x44;
 			buffer[4] = 0x45;
-			
+			*/
 			
 			/*PORTA |= 0x02;*/
 			
