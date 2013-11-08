@@ -41,9 +41,9 @@ static volatile uint8_t uart_buffer_read_pos = 0;
 
 /*const uint8_t uart_interbit = 105;*/ /* 9600 baud */
 
-const uint8_t uart_interbit = 54; /* 19200 baud*/
+static const uint8_t uart_interbit = 54; /* 19200 baud*/
 
-const uint8_t uart_prescaler = _BV( CS01 );
+static const uint8_t uart_prescaler = _BV( CS01 );
 
 #define UART_STATE_IDLE       0
 
@@ -89,17 +89,17 @@ ISR(TIM0_COMPA_vect, ISR_NOBLOCK)
 	
 	PORTA &= ~0x02;
 	
-	if( uart_cnt & 0x01 ){ /* odd if receive */
+	if( (uart_cnt & 0x01) != 0 ){ /* odd if receive */
 		
 		if( uart_cnt <= UART_RECEIVE_LAST_DATA ){
 			uart_rx_buf >>= 1;
-			if( bit_in ){
+			if( bit_in != 0 ){
 				uart_rx_buf |= 0x80;
 				}  
 			}
 		
 		else if( uart_cnt == UART_RECEIVE_STOP_1 ){
-			if( !bit_in ){
+			if( bit_in == 0 ){
 				uart_error = UART_ERROR_FRAME;
 				}
 			
@@ -186,7 +186,7 @@ ISR(TIM0_COMPA_vect, ISR_NOBLOCK)
 		
 		if( uart_cnt <= UART_TRANSMIT_LAST_DATA ){
 			
-			if( uart_tx_buf & 0x01 ){
+			if( (uart_tx_buf & 0x01) != 0 ){
 				bit_out = 0x01;
 				}
 			
@@ -232,7 +232,7 @@ ISR(TIM0_COMPA_vect, ISR_NOBLOCK)
 				}
 			}
 		
-		if( bit_out ){
+		if( bit_out != 0 ){
 			PORTB |= 0x01;
 			}
 		else {
@@ -383,10 +383,10 @@ void uart_wait( void ){
 	}
 
 uint8_t uart_is_done( void ) {
-	return uart_cnt == UART_IDLE;
+	return (uint8_t)(uart_cnt == UART_IDLE);
 	}
 
 
 uint8_t uart_has_data( void ) {
-	return uart_has_received || (uart_buffer_read_pos != uart_buffer_write_pos);
+	return (uint8_t)((uart_has_received == 1) || (uart_buffer_read_pos != uart_buffer_write_pos));
 	}

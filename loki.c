@@ -29,19 +29,21 @@
 #include "UART/uart.h"
 #include "Modbus/modbus.h"
 
-modbus_message_t msg;
+
+#include "modbus_implementation.c"
+
+static modbus_message_t msg;
+
 
 int main(){
-
+	uint8_t done = 0;
 	uint8_t i = 0;
 	uint8_t modbus_address = 0x17;
 	uint8_t retval;
-	uint8_t has_message = 0;
 	uint8_t recvd_byte;
 	
-	/*tick_t*/ uint16_t t_last, t_current;
+	uint16_t t_last, t_current;
 	
-	/*uint8_t buffer[16];*/
 	uint8_t bytes = 0;
 	
 	timer_init();
@@ -52,12 +54,12 @@ int main(){
 	DDRA = 0xFF;
 	PORTA = 1;
 	
-	/*uart_listen();*/
 	
 	t_last = timer_get_fast();/*timer_get_time();*/
-	while( 1 ){
+	
+	while( done != 1 ){
 		
-		if( uart_has_data()  ){
+		if( uart_has_data() != 0 ){
 			PORTA |= 0x10;
 			recvd_byte = uart_recv();
 			modbus_append_byte( &msg, recvd_byte );

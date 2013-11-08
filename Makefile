@@ -1,6 +1,7 @@
 CC=avr-gcc
 FLAGS=-Os -mmcu=attiny84a -Wall -pedantic -fwrapv
 OBJCOPY=avr-objcopy
+SERIALPORT=/dev/ttyUSB0
 
 all:
 	$(CC) $(FLAGS) -c Timer/timer.c
@@ -12,7 +13,7 @@ all:
 
 
 program:
-	avrdude -c avrisp -p t84 -P /dev/ttyUSB0 -b 19200 -U flash:w:loki.hex
+	avrdude -c avrisp -p t84 -P $(SERIALPORT) -b 19200 -U flash:w:loki.hex
 
 
 clean:

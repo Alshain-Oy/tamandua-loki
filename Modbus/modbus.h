@@ -74,6 +74,7 @@ typedef struct {
 	uint8_t length, target_length, slave_address;
 	} modbus_message_t;
 
+extern uint16_t modbus_global_event_counter;
 
 uint16_t modbus_compute_crc( modbus_message_t *msg );
 void modbus_reset( modbus_message_t *msg );
@@ -85,20 +86,23 @@ uint8_t modbus_validate_function( modbus_message_t *msg );
 uint8_t modbus_get_target_length( modbus_message_t *msg );
 uint8_t modbus_inspect( modbus_message_t *msg );
 void modbus_create_exception_response( modbus_message_t *msg, uint8_t func, uint8_t exception );
-uint8_t modbus_handle_read_coils( modbus_message_t *msg, uint16_t address, uint16_t count );
-uint8_t modbus_handle_read_discrete_inputs( modbus_message_t *msg, uint16_t address, uint16_t count );
-uint8_t modbus_handle_read_discrete_inputs( modbus_message_t *msg, uint16_t address, uint16_t count );
-uint8_t modbus_handle_read_input_registers( modbus_message_t *msg, uint16_t address, uint16_t count );
-uint8_t modbus_handle_write_single_coil( modbus_message_t *msg, uint16_t address, uint16_t value );
-uint8_t modbus_handle_write_single_register( modbus_message_t *msg, uint16_t address, uint16_t value );
-uint8_t modbus_handle_read_exception_status( modbus_message_t *msg );
-uint8_t modbus_handle_diagnostics( modbus_message_t *msg, uint16_t subfunction );
-uint8_t modbus_handle_get_comm_event_log( modbus_message_t *msg );
-uint8_t modbus_handle_get_comm_event_counter( modbus_message_t *msg );
-uint8_t modbus_handle_write_multiple_coils( modbus_message_t *msg, uint16_t address, uint16_t count, uint8_t *values );
-uint8_t modbus_handle_write_multiple_registers( modbus_message_t *msg, uint16_t address, uint16_t count, uint16_t *values );
-uint8_t modbus_handle_report_server_id( modbus_message_t *msg );
-uint8_t modbus_handle_write_mask_register( modbus_message_t *msg, uint16_t address, uint16_t and_mask, uint16_t or_mask );
+
+extern uint8_t modbus_handle_read_coils( modbus_message_t *msg, uint16_t address, uint16_t count );
+extern uint8_t modbus_handle_read_discrete_inputs( modbus_message_t *msg, uint16_t address, uint16_t count );
+extern uint8_t modbus_handle_read_discrete_inputs( modbus_message_t *msg, uint16_t address, uint16_t count );
+extern uint8_t modbus_handle_read_input_registers( modbus_message_t *msg, uint16_t address, uint16_t count );
+extern uint8_t modbus_handle_read_holding_registers( modbus_message_t *msg, uint16_t address, uint16_t count );
+extern uint8_t modbus_handle_write_single_coil( modbus_message_t *msg, uint16_t address, uint16_t value );
+extern uint8_t modbus_handle_write_single_register( modbus_message_t *msg, uint16_t address, uint16_t value );
+extern uint8_t modbus_handle_read_exception_status( modbus_message_t *msg );
+extern uint8_t modbus_handle_diagnostics( modbus_message_t *msg, uint16_t subfunction );
+extern uint8_t modbus_handle_get_comm_event_log( modbus_message_t *msg );
+extern uint8_t modbus_handle_get_comm_event_counter( modbus_message_t *msg );
+extern uint8_t modbus_handle_write_multiple_coils( modbus_message_t *msg, uint16_t address, uint16_t count, uint8_t *values );
+extern uint8_t modbus_handle_write_multiple_registers( modbus_message_t *msg, uint16_t address, uint16_t count, uint16_t *values );
+extern uint8_t modbus_handle_report_server_id( modbus_message_t *msg );
+extern uint8_t modbus_handle_write_mask_register( modbus_message_t *msg, uint16_t address, uint16_t and_mask, uint16_t or_mask );
+
 uint8_t modbus_handle_message( modbus_message_t *msg, uint8_t own_address );
 
 
